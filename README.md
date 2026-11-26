@@ -2,80 +2,48 @@
 
 > 桌面上的代码，装进口袋。
 
-KimiCode 是一个 Android 随身客户端，用于连接 **Kimi Code Desktop 的官方远程控制服务**。在电脑上开启远程控制后，手机扫描一次二维码（或粘贴配对链接），之后从桌面图标直接进入自己的 Kimi Code 工作区——查看会话、继续对话、审批工具调用，不再依赖浏览器标签页。
+KimiCode 是一个 Android 随身客户端，连接 **Kimi Code Desktop 的官方远程控制服务**。电脑上开启远程控制后，手机扫码配对一次，之后点桌面图标就能直接进入自己的 Kimi Code 工作区——查看会话、继续对话、审批工具调用，不用再开浏览器。
 
-安装包约 5.8 MB，不含原生库，不限制 CPU 架构；最低支持 Android 8.0（API 26）。
+安装包约 5.8 MB，最低支持 Android 8.0（API 26）。
 
-## 功能特性
+## 下载
 
-**配对与连接**
+从 [Releases](../../releases) 页面下载最新 `app-release.apk`，侧载安装（需允许「安装未知应用」）。
 
-- 三种配对方式：摄像头扫描二维码、从相册识别二维码截图、手动粘贴 HTTPS 配对链接。
-- 相册识别使用系统图片选择器，应用内异步解码，不申请相册 / 存储权限。
-- 扫码后先显示连接域名供确认，不直接加载不明二维码。
-- 配对链接保存在应用私有空间的加密存储中（EncryptedSharedPreferences），重启后自动恢复；旧版明文数据首次读取时自动迁移并清除明文副本。
-- 连接失败时提供错误页与「重新连接」按钮。
+## 三分钟上手
 
-**远程控制页**
+1. 电脑打开 **Kimi Code Desktop 1.1.0+**：设置 → 远程控制 → 开启，保持电脑运行并联网
+2. 手机打开 App，**扫码** / **相册识别二维码** / **粘贴配对链接**，确认域名后保存
+3. 在应用内弹窗登录同一 Kimi 账号，完成
 
-- 全屏 WebView，无多余原生顶栏，页面内容即全部界面。
-- 顶部加载进度条；支持页面内返回、远程页面的文件选择上传。
-- Kimi 登录在应用内弹窗完成（手机号 / 企业 SSO），不跳外部浏览器；登录成功自动返回，也可点「完成并返回」；弹窗已适配状态栏，不与系统图标重叠。
+之后打开 App 即进入工作区。
 
-**安全与隐私**
+## 它是怎么工作的
 
-- 仅允许 HTTPS；拦截 HTTP 链接，SSL 证书错误直接停止连接。
-- 配对信息禁止进入系统备份；完整配对令牌不在界面显示。
-- 关闭 WebView 调试与文件 / content 访问；不申请麦克风、存储、通讯录、定位权限。
-- 语音输入交给系统输入法，App 内不集成语音模块。
+App 本身只是一个安全的配对壳：配对链接加密保存在本机，远程页面用全屏 WebView 加载官方远程控制服务。所有代码执行、文件读写都发生在你的电脑上，手机只是窗口。仅允许 HTTPS，不申请存储、通讯录、定位等多余权限。
 
-## 使用方式
+## 常见问题
 
-1. 电脑打开 **Kimi Code Desktop 1.1.0+**，进入「设置 → 远程控制」并开启，保持电脑运行并联网。
-2. 手机安装 APK（侧载，需允许「安装未知应用」）。
-3. 打开 App，选择「扫描二维码」「从相册识别二维码」或「粘贴配对链接」，确认域名后保存。
-4. 之后直接打开 App 即进入工作区；需要登录时在应用内弹窗完成。
-5. 如需更换配对：当前版本没有应用内换配对入口，请清除应用数据或卸载重装后重新扫码。
+- **电脑必须开着吗？** 是。电脑休眠、断网或 Desktop 退出后远程控制不可用。
+- **想换一台电脑配对？** 当前版本没有应用内换配对入口，清除应用数据或重装后重新扫码。
+- **桌面端重建了远程链接？** 旧配对会失效，同样清除数据后重新配对。
+- **是官方应用吗？** 不是。这是第三方客户端，远程控制能力由 Kimi Code Desktop 官方服务提供。
 
-## 构建
+## 自己构建
 
-环境要求：JDK 17、Android SDK 35、Gradle 8.13（AGP 8.7.3）。
+环境：JDK 17 + Android SDK 35 + Gradle 8.13。
 
 ```bash
 gradle testDebugUnitTest assembleRelease
 ```
 
-- **Windows 中文路径注意**：AGP 会拒绝含非 ASCII 字符的项目路径。可先 `subst K: "项目目录"` 映射出纯 ASCII 盘符，在 `K:\` 下构建，完成后 `subst K: /d` 解除。
-- `local.properties` 需配置 `sdk.dir` 指向本机 Android SDK（该文件不入库）。
-- **签名**：release 默认读取 `signing/keystore.properties` 与其中的 keystore 文件；两者不入库，缺失时回退 debug 签名。本机侧载使用固定自签名密钥，保证覆盖升级签名一致；密钥放置方式见 [signing/README.md](signing/README.md)。
+- `local.properties` 需配置 `sdk.dir` 指向本机 Android SDK
+- 没有 `signing/keystore.properties` 时 release 自动回退 debug 签名，可直接侧载
+- Windows 下项目路径不能含中文（AGP 限制），可用 `subst` 映射纯 ASCII 盘符解决
+- 仓库带 GitHub Actions 工作流，push / PR / 打 `v*` tag 自动构建并上传 APK artifact
 
-## 项目结构
+## 来源与许可
 
-```
-app/src/main/java/com/kimicode/pocket/
-├── MainActivity.kt        # 配对页 / 远程页 / 登录弹窗 / 扫码与相册识别入口
-├── PairingStore.kt        # 配对链接加密存储与明文迁移
-├── PairingValidator.kt    # 配对链接校验（HTTPS、官方域名）
-├── LoginFlow.kt           # 登录完成页判定
-└── GalleryQrDecoder.kt    # 相册二维码异步解码
-app/src/main/res/layout/   # activity_pairing / activity_remote
-app/src/test/              # LoginFlow、PairingValidator 单元测试
-signing/                   # 签名说明（密钥本身不入库）
-```
+本仓库 fork 自 [hf-zhangyang/kimi-code-mobile](https://github.com/hf-zhangyang/kimi-code-mobile)，新增 GitHub Actions 构建工作流（已向上游提交 PR）。
 
-## 边界与说明
-
-- 这是第三方配对客户端，**不是 Moonshot AI 官方应用**；控制能力由 Kimi Code Desktop 官方远程控制服务提供。
-- 电脑端需保持运行并联网；桌面端重建远程链接后，旧配对会失效，需按上文方式重新配对。
-- 卸载 App 会删除本机保存的配对链接。
-- 当前使用本地固定测试签名，适合侧载体验，未上架应用商店。
-
-## 第三方组件
-
-- 二维码扫描：JourneyApps ZXing Android Embedded 4.3.0（Apache License 2.0）。
-- 加密存储：AndroidX Security Crypto / Tink。
-- 完整许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
-
-## 许可
-
-本项目自身代码以 [MIT License](LICENSE) 开源，可自由使用、修改与分发。第三方组件保留其原有许可，见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+项目代码以 [MIT License](LICENSE) 开源。第三方组件：JourneyApps ZXing（Apache 2.0）、AndroidX Security Crypto / Tink，完整许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
